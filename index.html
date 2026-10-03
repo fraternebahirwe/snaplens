@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>SnapLens</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="stage">
+    <video id="video" playsinline muted></video>
+    <canvas id="canvas"></canvas>
+
+    <div id="topbar">
+      <span class="brand">SnapLens</span>
+      <button id="flip" title="Flip camera" aria-label="Flip camera">🔄</button>
+    </div>
+
+    <div id="message" hidden></div>
+    <div id="rec" hidden><i></i><span id="timer">0:00</span></div>
+
+    <div id="bottom">
+      <div id="filters" role="listbox" aria-label="Filters"></div>
+      <button id="shutter" aria-label="Take photo (tap) or video (hold)"><span></span></button>
+      <p class="hint">Tap for a photo · Hold for a video</p>
+    </div>
+
+    <div id="preview" hidden>
+      <img id="previewImg" alt="">
+      <video id="previewVid" controls playsinline loop></video>
+      <div class="actions">
+        <button id="discard">✖ Discard</button>
+        <a id="save" download>⬇ Save</a>
+      </div>
+    </div>
+  </div>
+  <script src="filters.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
