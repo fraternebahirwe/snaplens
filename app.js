@@ -18,10 +18,6 @@
   let stream = null;
   let facing = "user";
   let current = FILTERS[0];
-  let faces = [];
-  let detector = null;
-  let detecting = false;
-  let lastDetect = 0;
   const supportsCtxFilter = "filter" in ctx;
   const small = document.createElement("canvas");
 
@@ -35,6 +31,7 @@
     b.setAttribute("role", "option");
     b.addEventListener("click", () => {
       current = f;
+      if (f.faces) needFaceTracking();
       document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c === b));
       b.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
     });
@@ -58,9 +55,6 @@
     if (!supportsCtxFilter) setTimeout(() => showMessage(""), 5000);
     video.srcObject = stream;
     await video.play();
-    if ("FaceDetector" in window && !detector) {
-      try { detector = new FaceDetector({ fastMode: true, maxDetectedFaces: 3 }); } catch (e) { detector = null; }
-    }
   }
 
   document.getElementById("flip").addEventListener("click", () => {
@@ -68,11 +62,41 @@
     startCamera();
   });
 
-  async function detectFaces(now) {
-    if (!detector || detecting || now - lastDetect < 120) return;
-    detecting = true; lastDetect = now;
-    try { faces = (await detector.detect(video)).map(f => f.boundingBox); } catch (e) { faces = []; }
-    detecting = false;
+  // Face data in video pixels, mirrored to match the selfie preview.
+  function mirrorFace(f, vw) {
+    const m = {};
+    for (const k in f) m[k] = typeof f[k] === "number" ? f[k] : { x: vw - f[k].x, y: f[k].y };
+    m.angle = -f.angle;
+    return m;
+  }
+
+  // Used only if MediaPipe cannot load: one face-shaped guess in the middle.
+  function guessFace(vw, vh) {
+    const faceW = vw * 0.35, faceH = faceW * 1.3, cx = vw / 2, cy = vh * 0.4;
+    const pt = (dx, dy) => ({ x: cx + dx * faceW, y: cy + dy * faceH });
+    return [{
+      eyes: pt(0, -0.1), eyeL: pt(0.22, -0.1), eyeR: pt(-0.22, -0.1), forehead: pt(0, -0.45), headTop: pt(0, -0.55),
+      nose: pt(0, 0.1), mouth: pt(0, 0.28), mouthBottom: pt(0, 0.3), chin: pt(0, 0.5),
+      mouthOpen: 0, angle: 0, faceW, faceH
+    }];
+  }
+
+  function facesForFilter(vw, vh, mirror) {
+    const tr = window.faceTracker;
+    if (!tr || tr.state === "failed") return guessFace(vw, vh);
+    if (tr.state !== "ready") return [];
+    const raw = tr.detect(video);
+    return mirror ? raw.map(f => mirrorFace(f, vw)) : raw;
+  }
+
+  function needFaceTracking() {
+    const tr = window.faceTracker;
+    if (!tr || tr.state !== "idle") return;
+    showMessage("Loading face tracking…");
+    tr.load().then(() => {
+      showMessage(tr.state === "failed" ? "Face tracking could not load (are you online?). Using a fixed sticker position." : "");
+      if (tr.state === "failed") setTimeout(() => showMessage(""), 4000);
+    });
   }
 
   // ---------- Rendering ----------
@@ -82,7 +106,6 @@
     if (!vw) return;
     if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh; }
     const mirror = facing === "user";
-    if (current.faces) detectFaces(now);
 
     ctx.save();
     if (mirror) { ctx.translate(vw, 0); ctx.scale(-1, 1); }
@@ -101,10 +124,8 @@
     ctx.restore();
 
     if (current.draw) {
-      // face boxes come from the unmirrored video; flip x when the preview is mirrored
-      const fs = mirror ? faces.map(f => ({ x: vw - f.x - f.width, y: f.y, width: f.width, height: f.height })) : faces;
       ctx.save();
-      current.draw(ctx, vw, vh, now, fs);
+      current.draw(ctx, vw, vh, now, current.faces ? facesForFilter(vw, vh, mirror) : []);
       ctx.restore();
     }
   }
