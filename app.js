@@ -117,6 +117,8 @@
     if (kind === "photo") { previewImg.src = url; }
     else { previewVid.src = url; previewVid.play().catch(() => {}); }
     const ext = kind === "photo" ? "png" : (blob.type.includes("mp4") ? "mp4" : "webm");
+    lastFile = new File([blob], "snaplens." + ext, { type: blob.type });
+    shareBtn.hidden = !(navigator.canShare && navigator.canShare({ files: [lastFile] }));
     saveLink.href = url;
     saveLink.download = "snaplens-" + Date.now() + "." + ext;
     preview.hidden = false;
@@ -129,6 +131,10 @@
     previewVid.removeAttribute("src");
     preview.hidden = true;
   });
+
+  const shareBtn = document.getElementById("share");
+  let lastFile = null;
+  shareBtn.addEventListener("click", () => navigator.share({ files: [lastFile] }).catch(() => {}));
 
   function takePhoto() {
     canvas.toBlob(b => b && showPreview("photo", b), "image/png");
