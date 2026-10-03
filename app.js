@@ -190,6 +190,24 @@
   shutter.addEventListener("pointercancel", () => { clearTimeout(holdTimer); if (holding) { stopRecording(); holding = false; } });
   shutter.addEventListener("contextmenu", e => e.preventDefault());
 
+  // ---------- Shortcuts and swipe ----------
+  function selectFilter(delta) {
+    const i = (FILTERS.indexOf(current) + delta + FILTERS.length) % FILTERS.length;
+    document.querySelectorAll(".chip")[i].click();
+  }
+  window.addEventListener("keydown", e => {
+    if (!preview.hidden) return;
+    if (e.key === " " && !e.repeat) { e.preventDefault(); if (video.videoWidth) takePhoto(); }
+    if (e.key === "ArrowRight") selectFilter(1);
+    if (e.key === "ArrowLeft") selectFilter(-1);
+  });
+  let swipeX = null;
+  canvas.addEventListener("pointerdown", e => { swipeX = e.clientX; });
+  canvas.addEventListener("pointerup", e => {
+    if (swipeX !== null && Math.abs(e.clientX - swipeX) > 60) selectFilter(e.clientX < swipeX ? 1 : -1);
+    swipeX = null;
+  });
+
   // ---------- Go ----------
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     showMessage("This browser cannot open the camera. Serve the page from http://localhost or https.");
