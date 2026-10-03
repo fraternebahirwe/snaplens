@@ -211,8 +211,45 @@
   shareBtn.addEventListener("click", () => navigator.share({ files: [lastFile] }).catch(() => {}));
 
   function takePhoto() {
+    flash();
     canvas.toBlob(b => b && showPreview("photo", b), "image/png");
   }
+
+  // ---------- self-timer ----------
+  let timerSecs = 0, counting = false;
+  const timerBtn = document.getElementById("timerBtn");
+  timerBtn.addEventListener("click", () => {
+    timerSecs = { 0: 3, 3: 10, 10: 0 }[timerSecs];
+    document.getElementById("timerLabel").textContent = timerSecs ? timerSecs + "s" : "";
+    timerBtn.classList.toggle("on", !!timerSecs);
+    timerBtn.setAttribute("aria-label", "Self-timer: " + (timerSecs ? timerSecs + " seconds" : "off"));
+    toast(timerSecs ? "Timer: " + timerSecs + " seconds" : "Timer off");
+  });
+
+  function countdown(n) {
+    const c = document.getElementById("count");
+    return new Promise(done => {
+      c.hidden = false;
+      (function step() {
+        if (n <= 0) { c.hidden = true; return done(); }
+        c.textContent = n--;
+        c.classList.remove("tick");
+        void c.offsetWidth;
+        c.classList.add("tick");
+        if (navigator.vibrate) navigator.vibrate(10);
+        setTimeout(step, 1000);
+      })();
+    });
+  }
+
+  function shoot() {
+    if (counting || !video.videoWidth) return;
+    if (!timerSecs) return takePhoto();
+    counting = true;
+    countdown(timerSecs).then(() => { counting = false; takePhoto(); });
+  }
+
+  saveLink.addEventListener("click", () => toast("Saved ✓"));
 
   let recorder = null, chunks = [], recStart = 0, recTick = null;
 
@@ -234,6 +271,7 @@
       if (blob.size) showPreview("video", blob);
     };
     recorder.start(250);
+    if (navigator.vibrate) navigator.vibrate(25);
     recStart = Date.now();
     recBadge.hidden = false;
     shutter.classList.add("recording");
@@ -264,7 +302,7 @@
   function release() {
     clearTimeout(holdTimer);
     if (holding) { stopRecording(); holding = false; }
-    else if (video.videoWidth) takePhoto();
+    else shoot();
   }
   shutter.addEventListener("pointerup", release);
   shutter.addEventListener("pointercancel", () => { clearTimeout(holdTimer); if (holding) { stopRecording(); holding = false; } });
@@ -277,7 +315,7 @@
   }
   window.addEventListener("keydown", e => {
     if (!preview.hidden || !document.getElementById("lensSheet").hidden) return;
-    if (e.key === " " && !e.repeat) { e.preventDefault(); if (video.videoWidth) takePhoto(); }
+    if (e.key === " " && !e.repeat) { e.preventDefault(); shoot(); }
     if (e.key === "ArrowRight") selectFilter(1);
     if (e.key === "ArrowLeft") selectFilter(-1);
   });
