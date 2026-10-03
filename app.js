@@ -251,7 +251,7 @@
     document.querySelectorAll(".chip")[i].click();
   }
   window.addEventListener("keydown", e => {
-    if (!preview.hidden) return;
+    if (!preview.hidden || !document.getElementById("lensSheet").hidden) return;
     if (e.key === " " && !e.repeat) { e.preventDefault(); if (video.videoWidth) takePhoto(); }
     if (e.key === "ArrowRight") selectFilter(1);
     if (e.key === "ArrowLeft") selectFilter(-1);
