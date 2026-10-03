@@ -24,8 +24,31 @@
   // ---------- UI ----------
   function showMessage(text) { message.textContent = text; message.hidden = !text; }
 
+  const lensName = document.getElementById("lensName");
+  function popName(text) {
+    lensName.textContent = text;
+    lensName.classList.remove("show");
+    void lensName.offsetWidth; // restart the animation
+    lensName.classList.add("show");
+  }
+  const toastEl = document.getElementById("toast");
+  let toastTimer;
+  function toast(text) {
+    toastEl.textContent = text;
+    toastEl.hidden = false;
+    toastEl.classList.remove("show");
+    void toastEl.offsetWidth;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2200);
+  }
+  const flashEl = document.getElementById("flash");
+  function flash() { flashEl.classList.remove("go"); void flashEl.offsetWidth; flashEl.classList.add("go"); if (navigator.vibrate) navigator.vibrate(20); }
+
   function setLens(f) {
     current = f;
+    popName(f.name.replace(/^[^A-Za-z]+/, ""));
+    if (navigator.vibrate) navigator.vibrate(8);
     if (f.init) f.init();
     if (f.faces) needFaceTracking();
     let active = null;
@@ -44,7 +67,9 @@
     const b = document.createElement("button");
     b.className = "chip" + (f === current ? " active" : "");
     b.dataset.id = f.id;
-    b.textContent = f.name;
+    b.textContent = f.emoji || "✨";
+    b.title = f.name;
+    b.setAttribute("aria-label", f.name);
     b.setAttribute("role", "option");
     b.addEventListener("click", () => setLens(f));
     filtersEl.appendChild(b);

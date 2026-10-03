@@ -13,10 +13,17 @@
 
     <div id="topbar">
       <span class="brand">SnapLens</span>
-      <button id="flip" title="Flip camera" aria-label="Flip camera">🔄</button>
+      <div class="tools">
+        <button id="timerBtn" class="tool" title="Self-timer" aria-label="Self-timer: off"><span>⏱</span><b id="timerLabel"></b></button>
+        <button id="flip" class="tool" title="Flip camera" aria-label="Flip camera">🔄</button>
+      </div>
     </div>
 
     <div id="message" hidden></div>
+    <div id="lensName" aria-live="polite"></div>
+    <div id="count" hidden></div>
+    <div id="flash"></div>
+    <div id="toast" hidden></div>
     <div id="rec" hidden><i></i><span id="timer">0:00</span></div>
 
     <div id="bottom">
