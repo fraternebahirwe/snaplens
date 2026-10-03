@@ -145,3 +145,8 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; }
 @media (prefers-reduced-motion: reduce) {
   #lensName.show, #count.tick, #preview, #preview img, #preview video, .tile, #shutter.recording, #flash.go { animation-duration: .01ms !important; }
 }
+
+/* tiles: reserve a 3:5 box with a padding spacer (aspect-ratio let grid rows collapse and overlap) */
+.tile { aspect-ratio: auto; }
+.tile::before { content: ""; display: block; padding-top: 166%; grid-area: 1 / 1; }
+.tile > .art { grid-area: 1 / 1; }
