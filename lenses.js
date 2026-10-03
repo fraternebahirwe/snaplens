@@ -85,3 +85,67 @@ FILTERS.push(
       ctx.globalAlpha = 1;
     } }
 );
+
+// ---------- Face lenses ----------
+// Magnify a patch of the live picture around a point (big mouth, bug eyes).
+function magnify(ctx, src, p, rx, ry, zoom, rot) {
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(rot);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx * zoom, ry * zoom, 0, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.rotate(-rot);
+  ctx.drawImage(src, p.x - rx, p.y - ry, rx * 2, ry * 2, -rx * zoom, -ry * zoom, rx * 2 * zoom, ry * 2 * zoom);
+  ctx.restore();
+}
+
+FILTERS.push(
+  { id: "bigmouth", name: "Big Mouth", cat: "face", emoji: "👄", faces: true,
+    draw: (ctx, w, h, t, faces) => {
+      const src = snapshot(ctx);
+      faces.forEach(f => magnify(ctx, src, f.mouth, f.faceW * 0.2, f.faceW * (0.1 + f.mouthOpen * 0.4), 1.9, f.angle));
+    } },
+
+  { id: "bugeyes", name: "Bug Eyes", cat: "face", emoji: "👀", faces: true,
+    draw: (ctx, w, h, t, faces) => {
+      const src = snapshot(ctx);
+      faces.forEach(f => [f.eyeL, f.eyeR].forEach(e => magnify(ctx, src, e, f.faceW * 0.12, f.faceW * 0.1, 2.1, f.angle)));
+    } },
+
+  { id: "panda", name: "Panda", cat: "face", emoji: "🐼", faces: true,
+    draw: (ctx, w, h, t, faces) => faces.forEach(f => {
+      at(ctx, f.forehead, f.angle, () => {
+        [-1, 1].forEach(s => ellipse(ctx, s * f.faceW * 0.42, -f.faceH * 0.04, f.faceW * 0.14, f.faceW * 0.14, 0, "#151515"));
+      });
+      at(ctx, { x: (f.forehead.x + f.chin.x) / 2, y: (f.forehead.y + f.chin.y) / 2 }, f.angle, () =>
+        ellipse(ctx, 0, 0, f.faceW * 0.52, f.faceH * 0.56, 0, "rgba(255,255,255,.38)"));
+      [[f.eyeL, 1], [f.eyeR, -1]].forEach(([e, s]) => at(ctx, e, f.angle, () => {
+        ellipse(ctx, 0, f.faceW * 0.02, f.faceW * 0.1, f.faceW * 0.15, s * 0.35, "rgba(15,15,15,.9)");
+        ellipse(ctx, 0, 0, f.faceW * 0.025, f.faceW * 0.025, 0, "#fff");
+      }));
+      at(ctx, f.nose, f.angle, () => ellipse(ctx, 0, 0, f.faceW * 0.1, f.faceW * 0.065, 0, "#151515"));
+    }) },
+
+  { id: "bunny", name: "Bunny", cat: "face", emoji: "🐰", faces: true,
+    draw: (ctx, w, h, t, faces) => faces.forEach(f => {
+      at(ctx, f.headTop, f.angle, () => {
+        [-1, 1].forEach(s => {
+          ellipse(ctx, s * f.faceW * 0.22, -f.faceH * 0.38, f.faceW * 0.12, f.faceH * 0.42, s * 0.12, "rgba(255,255,255,.95)");
+          ellipse(ctx, s * f.faceW * 0.22, -f.faceH * 0.34, f.faceW * 0.06, f.faceH * 0.3, s * 0.12, "#ffb3c7");
+        });
+      });
+      at(ctx, f.eyes, f.angle, () => emojiAt(ctx, "🕶️", 0, 0, f.faceW * 0.95));
+      at(ctx, f.nose, f.angle, () => ellipse(ctx, 0, 0, f.faceW * 0.05, f.faceW * 0.035, 0, "#ff8fab"));
+    }) },
+
+  { id: "oldman", name: "Old Man", cat: "face", emoji: "👴", faces: true, css: "contrast(1.08) saturate(.85)",
+    draw: (ctx, w, h, t, faces) => faces.forEach(f => {
+      const d = dist(f.mouthBottom, f.chin);
+      at(ctx, f.mouthBottom, f.angle, () => ellipse(ctx, 0, d * 0.55, f.faceW * 0.36, d * 0.85, 0, "rgba(242,242,242,.93)"));
+      at(ctx, f.mouth, f.angle, () => [-1, 1].forEach(s =>
+        ellipse(ctx, s * f.faceW * 0.1, -f.faceH * 0.06, f.faceW * 0.12, f.faceW * 0.04, -s * 0.3, "rgba(242,242,242,.95)")));
+      [f.eyeL, f.eyeR].forEach(e => at(ctx, e, f.angle, () =>
+        ellipse(ctx, 0, -f.faceW * 0.15, f.faceW * 0.1, f.faceW * 0.035, 0, "rgba(240,240,240,.95)")));
+    }) }
+);
