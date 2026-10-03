@@ -21,9 +21,28 @@
 
     <div id="bottom">
       <div id="filters" role="listbox" aria-label="Filters"></div>
-      <button id="shutter" aria-label="Take photo (tap) or video (hold)"><span></span></button>
+      <div class="shutter-row">
+        <button id="lensBtn" aria-label="Open lenses">✨</button>
+        <button id="shutter" aria-label="Take photo (tap) or video (hold)"><span></span></button>
+        <i class="spacer"></i>
+      </div>
       <p class="hint">Tap for a photo · Hold for a video</p>
     </div>
+
+    <section id="lensSheet" hidden aria-label="Lenses">
+      <div class="grab"></div>
+      <div class="tabs" role="tablist">
+        <button id="closeSheet" aria-label="Close lenses">⌄</button>
+        <button class="tab" data-tab="recents"><b>🕘</b>Recents</button>
+        <button class="tab" data-tab="favourites"><b>♡</b>Favourites</button>
+        <button class="tab active" data-tab="foryou"><b>✨</b>For you</button>
+        <button class="tab" data-tab="aesthetic"><b>💅</b>Aesthetic</button>
+        <button class="tab" data-tab="games"><b>🎮</b>Games</button>
+        <button id="searchBtn" aria-label="Search lenses">🔍</button>
+      </div>
+      <input id="lensSearch" type="search" placeholder="Search lenses" hidden>
+      <div id="lensGrid"></div>
+    </section>
 
     <div id="preview" hidden>
       <img id="previewImg" alt="">
@@ -37,6 +56,8 @@
   </div>
   <script src="filters.js"></script>
   <script type="module" src="tracker.js"></script>
+  <script src="lenses.js"></script>
   <script src="app.js"></script>
+  <script src="explorer.js"></script>
 </body>
 </html>

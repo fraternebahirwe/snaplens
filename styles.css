@@ -37,3 +37,36 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; }
 #share { background: #333; }
 .chip:focus-visible, #shutter:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { #rec i { animation: none; } }
+
+/* ---- lens button ---- */
+.shutter-row { display: flex; align-items: center; justify-content: center; gap: 26px; }
+#lensBtn { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.2); font-size: 1.4rem; backdrop-filter: blur(6px); }
+.spacer { width: 48px; }
+
+/* ---- lens explorer sheet ---- */
+#lensSheet { position: absolute; left: 0; right: 0; bottom: 0; top: 7%; z-index: 8; background: rgba(34,30,32,.97); border-radius: 22px 22px 0 0; display: flex; flex-direction: column; animation: slideUp .22s ease-out; }
+@keyframes slideUp { from { transform: translateY(100%); } }
+.grab { width: 54px; height: 5px; border-radius: 9px; background: rgba(255,255,255,.35); margin: 8px auto 4px; }
+.tabs { display: flex; align-items: center; gap: 2px; padding: 6px 8px; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { background: none; flex: 0 0 auto; color: rgba(255,255,255,.45); font-size: .78rem; padding: 6px 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tabs button b { font-size: 1.5rem; font-weight: 400; filter: grayscale(1); }
+.tabs button.active { color: #fff; font-weight: 700; }
+.tabs button.active b { filter: none; }
+#closeSheet, #searchBtn { font-size: 1.5rem; color: #fff; }
+#lensSearch { margin: 0 12px 8px; padding: 10px 14px; border-radius: 12px; border: 0; background: rgba(255,255,255,.12); color: #fff; font: inherit; }
+#lensGrid { flex: 1; overflow-y: auto; padding: 8px 10px 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; align-content: start; }
+.tile { position: relative; aspect-ratio: 3 / 5; border-radius: 12px; overflow: hidden; cursor: pointer; background: #333; display: grid; place-items: center; color: #fff; padding: 0; text-align: center; }
+.tile .art { font-size: clamp(1.8rem, 8vw, 3rem); }
+.tile .meta { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 4px 6px; background: linear-gradient(transparent, rgba(0,0,0,.75)); font-size: .72rem; line-height: 1.2; }
+.tile .meta small { display: block; opacity: .75; }
+.tile.selected { outline: 3px solid var(--yellow); outline-offset: -3px; }
+.tile .fav { position: absolute; top: 4px; left: 4px; background: rgba(0,0,0,.45); border-radius: 8px; width: 26px; height: 26px; font-size: .95rem; display: grid; place-items: center; }
+.tile .fav.on { color: var(--yellow); }
+.cat-basic { background: linear-gradient(160deg, #555, #222); }
+.cat-aesthetic { background: linear-gradient(160deg, #d58bd4, #4b3f8f); }
+.cat-face { background: linear-gradient(160deg, #ffb36b, #d1495b); }
+.cat-fun { background: linear-gradient(160deg, #6be0c7, #2a6fdb); }
+.cat-games { background: linear-gradient(160deg, #7bd96b, #1d6b4f); }
+.empty { grid-column: 1 / -1; text-align: center; opacity: .6; padding: 40px 10px; }
+@media (prefers-reduced-motion: reduce) { #lensSheet { animation: none; } }
