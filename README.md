@@ -18,6 +18,12 @@ Cameras need `localhost` or https:
 
 then open http://localhost:8001 and allow camera access.
 
+## Camera feel
+- Round lens bubbles under the camera (swipe or arrow keys); the lens name pops up when you switch
+- Capture flash, haptic buzz, and a pulsing ring while recording
+- ⏱ Self-timer (off / 3 s / 10 s) with a big animated countdown
+- Lens explorer tiles animate in; the selected lens glows
+
 ## Lenses
 - **Aesthetic:** Mirror, Day Stamp, Film Grain, VHS, Golden Hour, Soft Glow, plus the colour looks
 - **Face:** Big Mouth, Bug Eyes, Panda, Bunny, Old Man, Shades, Love Eyes, Dog, Crown, Clown
