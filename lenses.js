@@ -149,3 +149,45 @@ FILTERS.push(
         ellipse(ctx, 0, -f.faceW * 0.15, f.faceW * 0.1, f.faceW * 0.035, 0, "rgba(240,240,240,.95)")));
     }) }
 );
+
+// ---------- Games (played with your face) ----------
+function makeGame({ emojis, dir, hit, ok, label }) {
+  let items = [], score = 0, last = 0, spawn = 0;
+  return {
+    init() { items = []; score = 0; last = 0; spawn = 0; },
+    draw(ctx, w, h, t, faces) {
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+      last = t;
+      spawn -= dt;
+      if (spawn <= 0 && items.length < 6) {
+        spawn = 0.8 + Math.random() * 0.7;
+        items.push({ x: w * (0.12 + Math.random() * 0.76), y: dir > 0 ? -40 : h + 40, e: emojis[Math.floor(Math.random() * emojis.length)] });
+      }
+      items.forEach(it => { it.y += dir * h * 0.22 * dt; });
+      items = items.filter(it => {
+        if (dir > 0 ? it.y > h + 60 : it.y < -60) return false;
+        for (const f of faces) {
+          if (ok(f) && dist(hit(f), it) < f.faceW * 0.3) { score++; return false; }
+        }
+        return true;
+      });
+      items.forEach(it => emojiAt(ctx, it.e, it.x, it.y, w * 0.12));
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "bold " + Math.round(w * 0.07) + "px sans-serif";
+      ctx.lineWidth = 5;
+      ctx.strokeStyle = "rgba(0,0,0,.6)";
+      ctx.fillStyle = "#fff";
+      const text = label + ": " + score + (faces.length ? "" : "  (show your face)");
+      ctx.strokeText(text, w / 2, h * 0.1);
+      ctx.fillText(text, w / 2, h * 0.1);
+    }
+  };
+}
+
+FILTERS.push(
+  { id: "munch", name: "Mouth Munch", cat: "games", emoji: "🍕", faces: true,
+    ...makeGame({ emojis: ["🍕", "🍔", "🍟", "🍩", "🍪"], dir: 1, hit: f => f.mouth, ok: f => f.mouthOpen > 0.07, label: "Eaten" }) },
+  { id: "popit", name: "Pop It", cat: "games", emoji: "🎈", faces: true,
+    ...makeGame({ emojis: ["🎈", "🎈", "🎉", "⭐"], dir: -1, hit: f => f.nose, ok: () => true, label: "Popped" }) }
+);
