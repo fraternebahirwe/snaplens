@@ -33,3 +33,7 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; }
 #preview .actions > * { padding: 12px 26px; border-radius: 99px; font-weight: 700; text-decoration: none; background: #333; color: #fff; }
 #save { background: var(--yellow) !important; color: #000 !important; }
 [hidden] { display: none !important; }
+
+#share { background: #333; }
+.chip:focus-visible, #shutter:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { #rec i { animation: none; } }
