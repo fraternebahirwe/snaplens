@@ -19,9 +19,17 @@ function emojiRain(emojis, count) {
   };
 }
 
-function onFace(ctx, w, h, faces, fn) {
-  const list = faces && faces.length ? faces : [{ x: w * 0.3, y: h * 0.25, width: w * 0.4, height: w * 0.4 }];
-  list.forEach(f => fn(f.x + f.width / 2, f.y + f.height / 2, f.width, f.height));
+// Faces come from tracker.js (or a centred guess if tracking could not load):
+// { eyes, eyeL, eyeR, forehead, headTop, nose, mouth, mouthBottom, chin, mouthOpen, angle, faceW, faceH }
+function onFace(ctx, faces, fn) { faces.forEach(f => fn(f)); }
+
+// Run fn with the origin at pt, rotated to follow the head tilt.
+function at(ctx, pt, angle, fn) {
+  ctx.save();
+  ctx.translate(pt.x, pt.y);
+  ctx.rotate(angle);
+  fn();
+  ctx.restore();
 }
 
 function emojiAt(ctx, e, x, y, size) {
@@ -29,6 +37,13 @@ function emojiAt(ctx, e, x, y, size) {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(e, x, y);
+}
+
+function ellipse(ctx, x, y, rx, ry, rot, fill) {
+  ctx.beginPath();
+  ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+  ctx.fillStyle = fill;
+  ctx.fill();
 }
 
 function vignette(ctx, w, h, strength) {
@@ -55,17 +70,39 @@ const FILTERS = [
   { id: "sparkle", name: "✨ Sparkle", css: "brightness(1.08) contrast(1.05)", draw: emojiRain(["✨", "⭐", "💫"], 18) },
   { id: "snow", name: "❄️ Snow", css: "brightness(1.1) saturate(.9) hue-rotate(10deg)", draw: emojiRain(["❄️", "❅", "❆"], 22) },
   { id: "shades", name: "😎 Shades", faces: true,
-    draw: (ctx, w, h, t, faces) => onFace(ctx, w, h, faces, (cx, cy, fw) => emojiAt(ctx, "🕶️", cx, cy - fw * 0.08, fw * 0.95)) },
+    draw: (ctx, w, h, t, faces) => onFace(ctx, faces, f =>
+      at(ctx, f.eyes, f.angle, () => emojiAt(ctx, "🕶️", 0, 0, f.faceW * 0.95))) },
+  { id: "love", name: "😍 Love Eyes", faces: true,
+    draw: (ctx, w, h, t, faces) => onFace(ctx, faces, f => {
+      const pulse = 1 + Math.sin(t / 150) * 0.12;
+      [f.eyeL, f.eyeR].forEach(e => at(ctx, e, f.angle, () => emojiAt(ctx, "❤️", 0, 0, f.faceW * 0.2 * pulse)));
+    }) },
   { id: "dog", name: "🐶 Dog", faces: true,
-    draw: (ctx, w, h, t, faces) => onFace(ctx, w, h, faces, (cx, cy, fw, fh) => {
-      emojiAt(ctx, "🐶", cx, cy - fh * 0.55, fw * 0.8);
-      emojiAt(ctx, "👅", cx, cy + fh * 0.35, fw * 0.3);
+    draw: (ctx, w, h, t, faces) => onFace(ctx, faces, f => {
+      at(ctx, f.forehead, f.angle, () => {
+        [-1, 1].forEach(side => {
+          ellipse(ctx, side * f.faceW * 0.36, -f.faceH * 0.02, f.faceW * 0.15, f.faceH * 0.3, side * 0.3, "#8b5a2b");
+          ellipse(ctx, side * f.faceW * 0.36, 0, f.faceW * 0.08, f.faceH * 0.2, side * 0.3, "#f2a7b8");
+        });
+      });
+      at(ctx, f.nose, f.angle, () => {
+        ellipse(ctx, 0, 0, f.faceW * 0.11, f.faceW * 0.08, 0, "#1b1b1b");
+        ellipse(ctx, -f.faceW * 0.03, -f.faceW * 0.025, f.faceW * 0.03, f.faceW * 0.015, 0, "rgba(255,255,255,.6)");
+      });
+      if (f.mouthOpen > 0.06) at(ctx, f.mouthBottom, f.angle, () => emojiAt(ctx, "👅", 0, f.faceW * 0.1, f.faceW * (0.2 + f.mouthOpen)));
     }) },
   { id: "crown", name: "👑 Crown", faces: true,
-    draw: (ctx, w, h, t, faces) => onFace(ctx, w, h, faces, (cx, cy, fw, fh) => emojiAt(ctx, "👑", cx, cy - fh * 0.62, fw * 0.8)) },
+    draw: (ctx, w, h, t, faces) => onFace(ctx, faces, f =>
+      at(ctx, f.headTop, f.angle, () => emojiAt(ctx, "👑", 0, -f.faceW * 0.12, f.faceW * 0.85))) },
   { id: "clown", name: "🤡 Clown", faces: true,
-    draw: (ctx, w, h, t, faces) => onFace(ctx, w, h, faces, (cx, cy, fw, fh) => {
-      emojiAt(ctx, "🔴", cx, cy + fh * 0.05, fw * 0.22);
-      emojiAt(ctx, "🌈", cx, cy - fh * 0.62, fw * 0.9);
+    draw: (ctx, w, h, t, faces) => onFace(ctx, faces, f => {
+      at(ctx, f.forehead, f.angle, () => {
+        [[-0.5, "#ff4d4d"], [0.5, "#4da6ff"], [-0.32, "#ffd23f"], [0.32, "#4dd964"]].forEach(([x, c], i) =>
+          ellipse(ctx, x * f.faceW, -f.faceH * (i > 1 ? 0.12 : 0.02), f.faceW * 0.2, f.faceW * 0.2, 0, c));
+      });
+      at(ctx, f.nose, f.angle, () => {
+        ellipse(ctx, 0, 0, f.faceW * 0.12, f.faceW * 0.12, 0, "#e8202a");
+        ellipse(ctx, -f.faceW * 0.04, -f.faceW * 0.04, f.faceW * 0.03, f.faceW * 0.03, 0, "rgba(255,255,255,.7)");
+      });
     }) }
 ];
