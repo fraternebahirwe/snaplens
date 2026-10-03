@@ -24,24 +24,36 @@
   // ---------- UI ----------
   function showMessage(text) { message.textContent = text; message.hidden = !text; }
 
+  function setLens(f) {
+    current = f;
+    if (f.init) f.init();
+    if (f.faces) needFaceTracking();
+    let active = null;
+    document.querySelectorAll(".chip").forEach(c => {
+      const on = c.dataset.id === f.id;
+      c.classList.toggle("active", on);
+      if (on) active = c;
+    });
+    if (active) active.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
+    document.dispatchEvent(new CustomEvent("lenschange", { detail: f }));
+  }
+  window.setLens = setLens;
+  window.getLens = () => current;
+
   FILTERS.forEach(f => {
     const b = document.createElement("button");
     b.className = "chip" + (f === current ? " active" : "");
+    b.dataset.id = f.id;
     b.textContent = f.name;
     b.setAttribute("role", "option");
-    b.addEventListener("click", () => {
-      current = f;
-      if (f.faces) needFaceTracking();
-      document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c === b));
-      b.scrollIntoView({ inline: "center", behavior: "smooth", block: "nearest" });
-    });
+    b.addEventListener("click", () => setLens(f));
     filtersEl.appendChild(b);
   });
 
   // ---------- Camera ----------
   async function startCamera() {
     if (stream) stream.getTracks().forEach(t => t.stop());
-    const base = { video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } } };
+    const base = { video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } } };
     try {
       stream = await navigator.mediaDevices.getUserMedia({ ...base, audio: true });
     } catch (e) {
@@ -81,12 +93,18 @@
     }];
   }
 
-  function facesForFilter(vw, vh, mirror) {
+  // Move face points from video space into the cropped 9:16 canvas.
+  function shiftFace(f, sx, sy) {
+    const m = {};
+    for (const k in f) m[k] = typeof f[k] === "number" ? f[k] : { x: f[k].x - sx, y: f[k].y - sy };
+    return m;
+  }
+
+  function facesForFilter(crop, mirror) {
     const tr = window.faceTracker;
-    if (!tr || tr.state === "failed") return guessFace(vw, vh);
+    if (!tr || tr.state === "failed") return guessFace(crop.cw, crop.ch);
     if (tr.state !== "ready") return [];
-    const raw = tr.detect(video);
-    return mirror ? raw.map(f => mirrorFace(f, vw)) : raw;
+    return tr.detect(video).map(f => shiftFace(mirror ? mirrorFace(f, crop.vw) : f, crop.sx, crop.sy));
   }
 
   function needFaceTracking() {
@@ -100,32 +118,42 @@
   }
 
   // ---------- Rendering ----------
+  // Snapchat is vertical, so everything is cropped to 9:16 from the centre of the camera.
+  const TARGET = 9 / 16;
+  function cropFor(vw, vh) {
+    if (vw / vh > TARGET) { const cw = Math.round(vh * TARGET); return { vw, vh, cw, ch: vh, sx: (vw - cw) / 2, sy: 0 }; }
+    const ch = Math.round(vw / TARGET);
+    return { vw, vh, cw: vw, ch, sx: 0, sy: (vh - ch) / 2 };
+  }
+
   function render(now) {
     requestAnimationFrame(render);
     const vw = video.videoWidth, vh = video.videoHeight;
     if (!vw) return;
-    if (canvas.width !== vw || canvas.height !== vh) { canvas.width = vw; canvas.height = vh; }
+    const crop = cropFor(vw, vh);
+    const { cw, ch, sx, sy } = crop;
+    if (canvas.width !== cw || canvas.height !== ch) { canvas.width = cw; canvas.height = ch; }
     const mirror = facing === "user";
 
     ctx.save();
-    if (mirror) { ctx.translate(vw, 0); ctx.scale(-1, 1); }
+    if (mirror) { ctx.translate(cw, 0); ctx.scale(-1, 1); }
     if (current.pixel) {
-      small.width = Math.max(8, Math.round(vw * current.pixel));
-      small.height = Math.max(8, Math.round(vh * current.pixel));
-      small.getContext("2d").drawImage(video, 0, 0, small.width, small.height);
+      small.width = Math.max(8, Math.round(cw * current.pixel));
+      small.height = Math.max(8, Math.round(ch * current.pixel));
+      small.getContext("2d").drawImage(video, sx, sy, cw, ch, 0, 0, small.width, small.height);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(small, 0, 0, vw, vh);
+      ctx.drawImage(small, 0, 0, cw, ch);
       ctx.imageSmoothingEnabled = true;
     } else {
       if (supportsCtxFilter && current.css) ctx.filter = current.css;
-      ctx.drawImage(video, 0, 0, vw, vh);
+      ctx.drawImage(video, sx, sy, cw, ch, 0, 0, cw, ch);
       ctx.filter = "none";
     }
     ctx.restore();
 
     if (current.draw) {
       ctx.save();
-      current.draw(ctx, vw, vh, now, current.faces ? facesForFilter(vw, vh, mirror) : []);
+      current.draw(ctx, cw, ch, now, current.faces ? facesForFilter(crop, mirror) : []);
       ctx.restore();
     }
   }
