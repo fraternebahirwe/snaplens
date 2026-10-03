@@ -70,3 +70,78 @@ button { font: inherit; color: inherit; cursor: pointer; border: 0; }
 .cat-games { background: linear-gradient(160deg, #7bd96b, #1d6b4f); }
 .empty { grid-column: 1 / -1; text-align: center; opacity: .6; padding: 40px 10px; }
 @media (prefers-reduced-motion: reduce) { #lensSheet { animation: none; } }
+
+/* =========================================================
+   Polish pass: bubbles, popups, flash, countdown, animation
+   ========================================================= */
+:root { --glass: rgba(20, 20, 24, .45); --ease: cubic-bezier(.2, .8, .2, 1); }
+
+/* top bar */
+#topbar { padding-top: max(14px, env(safe-area-inset-top)); }
+.brand { text-shadow: 0 2px 8px rgba(0,0,0,.5); }
+.tools { display: flex; gap: 10px; }
+.tool { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-size: 1.15rem; display: grid; place-items: center; transition: transform .2s var(--ease), background .2s; }
+.tool:active { transform: scale(.88); }
+.tool.on { background: var(--yellow); color: #000; }
+.tool b { position: absolute; bottom: -2px; right: -2px; background: #000; color: var(--yellow); font-size: .62rem; padding: 1px 5px; border-radius: 99px; }
+.tool b:empty { display: none; }
+#flip:active { transform: rotate(180deg) scale(.9); }
+
+/* lens bubbles replace the old text chips */
+#filters { gap: 12px; padding: 18px 50% 14px; scroll-snap-type: x proximity; align-items: center; }
+.chip { flex: 0 0 auto; width: 46px; height: 46px; padding: 0; border-radius: 50%; font-size: 1.5rem; line-height: 1; display: grid; place-items: center; background: rgba(255,255,255,.16); border: 2px solid rgba(255,255,255,.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); scroll-snap-align: center; transition: transform .25s var(--ease), background .25s, border-color .25s, box-shadow .25s; }
+.chip:active { transform: scale(.9); }
+.chip.active { transform: scale(1.35); background: rgba(255, 252, 0, .22); border-color: var(--yellow); box-shadow: 0 0 0 4px rgba(255,252,0,.18), 0 6px 18px rgba(0,0,0,.4); font-weight: 400; color: inherit; }
+.chip.active:active { transform: scale(1.2); }
+
+/* lens name popup */
+#lensName { position: absolute; z-index: 4; left: 0; right: 0; top: 22%; text-align: center; font-size: 1.8rem; font-weight: 800; letter-spacing: .3px; text-shadow: 0 2px 14px rgba(0,0,0,.6); opacity: 0; pointer-events: none; }
+#lensName.show { animation: nameIn 1.3s var(--ease) both; }
+@keyframes nameIn { 0% { opacity: 0; transform: translateY(14px) scale(.9); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+
+/* flash + countdown + toast */
+#flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 9; }
+#flash.go { animation: flash .35s ease-out; }
+@keyframes flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+#count { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; font-size: 9rem; font-weight: 900; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.6); pointer-events: none; }
+#count.tick { animation: tick 1s var(--ease); }
+@keyframes tick { 0% { transform: scale(2.2); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 85% { opacity: 1; } 100% { transform: scale(.8); opacity: 0; } }
+#toast { position: absolute; z-index: 30; left: 50%; bottom: 190px; transform: translateX(-50%); background: rgba(255,255,255,.95); color: #111; padding: 9px 18px; border-radius: 99px; font-weight: 700; font-size: .9rem; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+#toast.show { animation: toastIn .3s var(--ease); }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 14px); } }
+#message { backdrop-filter: blur(10px); animation: toastIn .4s var(--ease); }
+
+/* shutter */
+#shutter { transition: transform .15s var(--ease); box-shadow: 0 0 0 0 rgba(255,255,255,.4); }
+#shutter:active { transform: scale(.92); }
+#shutter.recording { animation: ring 1.1s ease-out infinite; }
+@keyframes ring { 0% { box-shadow: 0 0 0 0 rgba(255,45,45,.55); } 100% { box-shadow: 0 0 0 22px rgba(255,45,45,0); } }
+#lensBtn { transition: transform .2s var(--ease); }
+#lensBtn:active { transform: scale(.88) rotate(-12deg); }
+.hint { text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+#rec { backdrop-filter: blur(8px); }
+
+/* preview after capture */
+#preview { animation: previewIn .32s var(--ease); }
+@keyframes previewIn { from { opacity: 0; transform: scale(1.04); } }
+#preview img, #preview video { animation: popIn .45s var(--ease); }
+@keyframes popIn { from { opacity: 0; transform: scale(.92); } }
+#preview .actions { background: linear-gradient(transparent, rgba(0,0,0,.8)); }
+#preview .actions > * { transition: transform .15s var(--ease); display: inline-flex; align-items: center; gap: 6px; }
+#preview .actions > *:active { transform: scale(.94); }
+
+/* lens explorer */
+#lensSheet { box-shadow: 0 -12px 40px rgba(0,0,0,.5); }
+.tile { animation: tileIn .4s var(--ease) both; animation-delay: calc(var(--i, 0) * 28ms); transition: transform .2s var(--ease), box-shadow .2s; }
+.tile:active { transform: scale(.94); }
+.tile .art { transition: transform .3s var(--ease); filter: drop-shadow(0 6px 8px rgba(0,0,0,.3)); }
+.tile:hover .art { transform: scale(1.15) rotate(-5deg); }
+.tile.selected { box-shadow: 0 0 0 3px var(--yellow), 0 8px 22px rgba(255,252,0,.25); outline: 0; }
+@keyframes tileIn { from { opacity: 0; transform: translateY(14px) scale(.92); } }
+.tabs button { transition: color .2s, transform .2s var(--ease); }
+.tabs button.active { transform: translateY(-2px); }
+.tabs button.active::after { content: ""; width: 18px; height: 3px; border-radius: 3px; background: var(--yellow); margin-top: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  #lensName.show, #count.tick, #preview, #preview img, #preview video, .tile, #shutter.recording, #flash.go { animation-duration: .01ms !important; }
+}

@@ -43,8 +43,9 @@
       grid.appendChild(e);
       return;
     }
-    list.forEach(f => {
+    list.forEach((f, i) => {
       const t = document.createElement("div");
+      t.style.setProperty("--i", Math.min(i, 16));
       t.className = "tile cat-" + (f.cat || "basic") + (active && active.id === f.id ? " selected" : "");
       t.setAttribute("role", "button");
       t.tabIndex = 0;
