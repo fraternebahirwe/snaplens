@@ -6,7 +6,8 @@ A Snapchat-style camera that runs in the browser: live filters, photos and video
 - 16 live filters (colour looks, pixel, falling hearts/sparkles/snow, face stickers: shades, dog, crown, clown)
 - Tap the round button for a photo, hold it to record a video (up to 60 s, with sound)
 - Flip between front and back camera
-- Preview, then Save (download) or Discard
+- Preview, then Save (download), Share (where supported) or Discard
+- Spacebar takes a photo; arrow keys or swipe change the filter
 
 ## Run
 Cameras need `localhost` or https:
